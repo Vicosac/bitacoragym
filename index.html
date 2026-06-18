@@ -6,13 +6,15 @@
 <title>Mis Entrenamientos</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
-    --border: #2e2e2e; --accent: #F48FB1; --accent-dim: #e07a9a;
-    --text: #f0f0f0; --text-muted: #888; --red: #ff4d4d;
-    --font: 'Inter', system-ui, sans-serif;
-  }
+  :root { --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222; --border: #2e2e2e; --accent: #F48FB1; --accent-dim: #e07a9a; --text: #f0f0f0; --text-muted: #888; --red: #ff4d4d; --font: 'Inter', system-ui, sans-serif; }
   body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+  #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; }
+  #login-screen h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 32px; }
+  #login-screen input { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--font); font-size: 0.9rem; padding: 11px 14px; outline: none; width: 100%; max-width: 280px; margin-bottom: 12px; transition: border 0.15s; }
+  #login-screen input:focus { border-color: var(--accent); }
+  #login-btn { background: var(--accent); color: #000; font-family: var(--font); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: none; border-radius: 4px; padding: 11px 28px; cursor: pointer; width: 100%; max-width: 280px; }
+  #login-error { color: var(--red); font-size: 0.78rem; margin-top: 10px; display: none; }
+  #app { display: none; }
   header { padding: 28px 32px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 16px; }
   header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
   header span { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; }
@@ -91,338 +93,84 @@
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #000; font-size: 0.8rem; font-weight: 600; padding: 10px 18px; border-radius: 4px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
   .toast.show { opacity: 1; }
   .loading { color: var(--text-muted); font-size: 0.82rem; padding: 40px 0; text-align: center; }
-  @media (max-width: 600px) {
-    header, nav, .page { padding-left: 16px; padding-right: 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.full { grid-column: 1; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-    .aerobico-grid { grid-template-columns: 1fr 1fr; }
-    .aerobico-grid .btn-remove { grid-column: 2; justify-self: end; }
-  }
+  @media (max-width: 600px) { header, nav, .page { padding-left: 16px; padding-right: 16px; } .form-grid { grid-template-columns: 1fr; } .form-group.full { grid-column: 1; } .stats-grid { grid-template-columns: 1fr 1fr; } .aerobico-grid { grid-template-columns: 1fr 1fr; } .aerobico-grid .btn-remove { grid-column: 2; justify-self: end; } }
 </style>
 </head>
 <body>
-<header>
+<div id="login-screen">
   <h1>Mis Entrenamientos</h1>
-  <span>Registro de entrenamiento</span>
-</header>
-<nav>
-  <button class="active" onclick="showPage('nueva', this)">Nueva sesión</button>
-  <button onclick="showPage('historial', this)">Historial</button>
-  <button onclick="showPage('analisis', this)">Análisis</button>
-</nav>
-<div id="page-nueva" class="page active">
-  <div class="form-grid">
-    <div class="form-group">
-      <label>Fecha</label>
-      <input type="date" id="fecha">
+  <input type="password" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter') checkPwd()">
+  <br>
+  <button id="login-btn" onclick="checkPwd()">Entrar</button>
+  <div id="login-error">Contraseña incorrecta</div>
+</div>
+<div id="app">
+  <header><h1>Mis Entrenamientos</h1><span>Registro de entrenamiento</span></header>
+  <nav>
+    <button class="active" onclick="showPage('nueva', this)">Nueva sesión</button>
+    <button onclick="showPage('historial', this)">Historial</button>
+    <button onclick="showPage('analisis', this)">Análisis</button>
+  </nav>
+  <div id="page-nueva" class="page active">
+    <div class="form-grid">
+      <div class="form-group"><label>Fecha</label><input type="date" id="fecha"></div>
+      <div class="form-group"><label>Tipo de sesión</label><select id="tipo"><option value="Fuerza">Fuerza</option><option value="Fuerza + Aeróbico">Fuerza + Aeróbico</option><option value="Aeróbico">Aeróbico</option><option value="Otro">Otro</option></select></div>
+      <div class="form-group full"><label>Entrada en calor</label><input type="text" id="calor" placeholder="Ej: 8' bicicleta moderada"></div>
+      <div class="form-group full"><label>Energía pre-entrenamiento</label><div class="slider-row"><input type="range" id="energia" min="1" max="10" value="7" oninput="document.getElementById('energia-val').textContent=this.value"><span class="slider-val" id="energia-val">7</span></div></div>
+      <div class="section-divider">Fuerza</div>
+      <div class="form-group full"><div id="ejercicios-list"></div><button class="btn-add" onclick="addEjercicio()">+ Agregar ejercicio</button></div>
+      <div class="section-divider">Aeróbico</div>
+      <div class="form-group full"><div id="aerobico-list"></div><button class="btn-add" onclick="addAerobico()">+ Agregar aeróbico</button></div>
+      <div class="section-divider">Cierre</div>
+      <div class="form-group full"><label>Sensación general</label><div class="slider-row"><input type="range" id="sensacion" min="1" max="10" value="7" oninput="document.getElementById('sensacion-val').textContent=this.value"><span class="slider-val" id="sensacion-val">7</span></div></div>
+      <div class="form-group full"><label>Notas libres</label><textarea id="notas" placeholder="Dolor, contexto, modificaciones, etc."></textarea></div>
     </div>
-    <div class="form-group">
-      <label>Tipo de sesión</label>
-      <select id="tipo">
-        <option value="Fuerza">Fuerza</option>
-        <option value="Fuerza + Aeróbico">Fuerza + Aeróbico</option>
-        <option value="Aeróbico">Aeróbico</option>
-        <option value="Otro">Otro</option>
-      </select>
-    </div>
-    <div class="form-group full">
-      <label>Entrada en calor</label>
-      <input type="text" id="calor" placeholder="Ej: 8' bicicleta moderada">
-    </div>
-    <div class="form-group full">
-      <label>Energía pre-entrenamiento</label>
-      <div class="slider-row">
-        <input type="range" id="energia" min="1" max="10" value="7" oninput="document.getElementById('energia-val').textContent=this.value">
-        <span class="slider-val" id="energia-val">7</span>
-      </div>
-    </div>
-    <div class="section-divider">Fuerza</div>
-    <div class="form-group full">
-      <div id="ejercicios-list"></div>
-      <button class="btn-add" onclick="addEjercicio()">+ Agregar ejercicio</button>
-    </div>
-    <div class="section-divider">Aeróbico</div>
-    <div class="form-group full">
-      <div id="aerobico-list"></div>
-      <button class="btn-add" onclick="addAerobico()">+ Agregar aeróbico</button>
-    </div>
-    <div class="section-divider">Cierre</div>
-    <div class="form-group full">
-      <label>Sensación general</label>
-      <div class="slider-row">
-        <input type="range" id="sensacion" min="1" max="10" value="7" oninput="document.getElementById('sensacion-val').textContent=this.value">
-        <span class="slider-val" id="sensacion-val">7</span>
-      </div>
-    </div>
-    <div class="form-group full">
-      <label>Notas libres</label>
-      <textarea id="notas" placeholder="Dolor, contexto, modificaciones, etc."></textarea>
-    </div>
+    <button class="btn-submit" id="btn-guardar" onclick="guardarSesion()">Guardar sesión</button>
   </div>
-  <button class="btn-submit" id="btn-guardar" onclick="guardarSesion()">Guardar sesión</button>
-</div>
-<div id="page-historial" class="page">
-  <div id="sessions-list" class="sessions-list"></div>
-</div>
-<div id="page-analisis" class="page">
-  <div class="stats-grid" id="stats-grid"></div>
-  <div class="an-section-title">Ejercicios más frecuentes</div>
-  <div class="freq-list" id="freq-list"></div>
-  <div class="an-section-title">Aeróbico más frecuente</div>
-  <div class="freq-list" id="freq-aerobico"></div>
+  <div id="page-historial" class="page"><div id="sessions-list" class="sessions-list"></div></div>
+  <div id="page-analisis" class="page">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="an-section-title">Ejercicios más frecuentes</div>
+    <div class="freq-list" id="freq-list"></div>
+    <div class="an-section-title">Aeróbico más frecuente</div>
+    <div class="freq-list" id="freq-aerobico"></div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const SUPABASE_URL = 'https://lthlauhwzusulqocvica.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_wFGb1fWoGrvcdrQAPh34PA_rwXPRdab';
-const HEADERS = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Prefer': 'return=representation'
-};
-function toast(msg, ok=true) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.background = ok ? 'var(--accent)' : 'var(--red)';
-  el.style.color = ok ? '#000' : '#fff';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
-}
-async function apiFetch(path, options={}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: HEADERS, ...options });
-  if (!res.ok) { const err = await res.text(); throw new Error(err); }
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-}
-document.getElementById('fecha').valueAsDate = new Date();
-let ejCount = 0, serieCount = 0, aeroCount = 0;
-function addEjercicio() {
-  const id = ejCount++;
-  const block = document.createElement('div');
-  block.className = 'ejercicio-block';
-  block.id = `ej-${id}`;
-  block.innerHTML = `
-    <div class="ejercicio-block-header">
-      <input type="text" placeholder="Nombre del ejercicio" class="ej-nombre">
-      <button class="btn-remove" onclick="document.getElementById('ej-${id}').remove()">×</button>
-    </div>
-    <div class="series-header">
-      <span>Serie</span><span>Reps</span><span>Peso (kg)</span><span></span>
-    </div>
-    <div class="series-list" id="series-${id}"></div>
-    <button class="btn-add-serie" onclick="addSerie(${id})">+ serie</button>
-  `;
-  document.getElementById('ejercicios-list').appendChild(block);
-  addSerie(id); addSerie(id); addSerie(id);
-}
-function addSerie(ejId) {
-  const list = document.getElementById(`series-${ejId}`);
-  const num = list.querySelectorAll('.serie-row').length + 1;
-  const sid = serieCount++;
-  const row = document.createElement('div');
-  row.className = 'serie-row';
-  row.id = `serie-${sid}`;
-  row.innerHTML = `
-    <span class="serie-num">${num}</span>
-    <input type="text" placeholder="ej: 12" class="serie-reps">
-    <input type="number" placeholder="kg" class="serie-peso" step="0.5" min="0">
-    <button class="btn-remove" onclick="removeSerie('serie-${sid}', ${ejId})">×</button>
-  `;
-  list.appendChild(row);
-}
-function removeSerie(sid, ejId) {
-  document.getElementById(sid).remove();
-  document.getElementById(`series-${ejId}`).querySelectorAll('.serie-row').forEach((r, i) => {
-    r.querySelector('.serie-num').textContent = i + 1;
-  });
-}
-function getEjercicios() {
-  return [...document.querySelectorAll('.ejercicio-block')].map(block => {
-    const nombre = block.querySelector('.ej-nombre').value.trim();
-    const series = [...block.querySelectorAll('.serie-row')].map((r, i) => ({
-      serie: i + 1,
-      reps: r.querySelector('.serie-reps').value.trim(),
-      peso: r.querySelector('.serie-peso').value,
-    })).filter(s => s.reps || s.peso);
-    return { nombre, series };
-  }).filter(e => e.nombre);
-}
-function addAerobico() {
-  const id = aeroCount++;
-  const block = document.createElement('div');
-  block.className = 'aerobico-block';
-  block.id = `aero-${id}`;
-  block.innerHTML = `
-    <div class="aerobico-grid">
-      <input type="text" placeholder="Tipo (ej: Escaladora, Bicicleta...)" class="aero-tipo">
-      <input type="text" placeholder="Tiempo (min)" class="aero-tiempo">
-      <input type="number" placeholder="Calorías" class="aero-cal" min="0">
-      <button class="btn-remove" onclick="document.getElementById('aero-${id}').remove()">×</button>
-    </div>
-  `;
-  document.getElementById('aerobico-list').appendChild(block);
-}
-function getAerobico() {
-  return [...document.querySelectorAll('.aerobico-block')].map(block => ({
-    tipo: block.querySelector('.aero-tipo').value.trim(),
-    tiempo: block.querySelector('.aero-tiempo').value.trim(),
-    calorias: block.querySelector('.aero-cal').value,
-  })).filter(a => a.tipo);
-}
-async function guardarSesion() {
-  const fecha = document.getElementById('fecha').value;
-  if (!fecha) { toast('Ingresá la fecha.', false); return; }
-  const btn = document.getElementById('btn-guardar');
-  btn.disabled = true; btn.textContent = 'Guardando...';
-  try {
-    await apiFetch('sesiones', {
-      method: 'POST',
-      body: JSON.stringify({
-        fecha,
-        tipo: document.getElementById('tipo').value,
-        calor: document.getElementById('calor').value.trim(),
-        energia: parseInt(document.getElementById('energia').value),
-        ejercicios: getEjercicios(),
-        aerobico: getAerobico(),
-        sensacion: parseInt(document.getElementById('sensacion').value),
-        notas: document.getElementById('notas').value.trim(),
-      })
-    });
-    toast('Sesión guardada');
-    document.getElementById('fecha').valueAsDate = new Date();
-    document.getElementById('calor').value = '';
-    document.getElementById('energia').value = 7; document.getElementById('energia-val').textContent = '7';
-    document.getElementById('sensacion').value = 7; document.getElementById('sensacion-val').textContent = '7';
-    document.getElementById('notas').value = '';
-    document.getElementById('ejercicios-list').innerHTML = '';
-    document.getElementById('aerobico-list').innerHTML = '';
-    ejCount = 0; serieCount = 0; aeroCount = 0;
-  } catch(e) {
-    toast('Error al guardar', false); console.error(e);
-  }
-  btn.disabled = false; btn.textContent = 'Guardar sesión';
-}
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  btn.classList.add('active');
-  if (name === 'historial') renderHistorial();
-  if (name === 'analisis') renderAnalisis();
-}
-function formatFecha(str) {
-  const [y,m,d] = str.split('-'); return `${d}/${m}/${y}`;
-}
-async function renderHistorial() {
-  const el = document.getElementById('sessions-list');
-  el.innerHTML = '<div class="loading">Cargando...</div>';
-  try {
-    const sessions = await apiFetch('sesiones?order=fecha.desc');
-    if (!sessions.length) { el.innerHTML = '<div class="empty-state">Sin sesiones registradas aún.</div>'; return; }
-    el.innerHTML = sessions.map(s => `
-      <div class="session-card">
-        <div class="session-card-header">
-          <span class="session-date">${formatFecha(s.fecha)}</span>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span class="session-tipo">${s.tipo}</span>
-            <button class="btn-delete" onclick="deleteSesion(${s.id})">Eliminar</button>
-          </div>
-        </div>
-        ${s.calor ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px">↳ Calor: ${s.calor}</div>` : ''}
-        ${(s.ejercicios||[]).length ? `
-          <div class="card-subsection">
-            <div class="card-subsection-title">Fuerza</div>
-            ${s.ejercicios.map(e => `
-              <div class="ej-detail">
-                <div class="ej-detail-nombre">${e.nombre}</div>
-                <div class="ej-series-list">
-                  ${(e.series||[]).map(sr => `
-                    <div class="ej-serie-item">S${sr.serie} — <span>${sr.reps} reps</span>${sr.peso ? ` · <span>${sr.peso}kg</span>` : ''}</div>
-                  `).join('')}
-                </div>
-              </div>
-            `).join('')}
-          </div>` : ''}
-        ${(s.aerobico||[]).length ? `
-          <div class="card-subsection">
-            <div class="card-subsection-title">Aeróbico</div>
-            ${s.aerobico.map(a => `
-              <div class="aerobico-item">
-                <span>${a.tipo}</span>
-                ${a.tiempo ? ` · <span>${a.tiempo} min</span>` : ''}
-                ${a.calorias ? ` · <span>${a.calorias} kcal</span>` : ''}
-              </div>
-            `).join('')}
-          </div>` : ''}
-        <div class="session-metrics">
-          <div class="metric"><span class="metric-label">Energía</span><span class="metric-val">${s.energia}/10</span></div>
-          <div class="metric"><span class="metric-label">Sensación</span><span class="metric-val">${s.sensacion}/10</span></div>
-        </div>
-        ${s.notas ? `<div class="session-notes">${s.notas}</div>` : ''}
-      </div>
-    `).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="empty-state">Error al cargar sesiones.</div>';
+const PASSWORD = 'Petiribi2026';
+function checkPwd() {
+  if (document.getElementById('pwd-input').value === PASSWORD) {
+    sessionStorage.setItem('auth','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('fecha').valueAsDate=new Date();
+  } else {
+    document.getElementById('login-error').style.display='block';
   }
 }
-async function deleteSesion(id) {
-  if (!confirm('¿Eliminar esta sesión?')) return;
-  try {
-    await apiFetch(`sesiones?id=eq.${id}`, { method: 'DELETE' });
-    toast('Sesión eliminada');
-    renderHistorial();
-  } catch(e) { toast('Error al eliminar', false); }
+if (sessionStorage.getItem('auth')==='1') {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
 }
-async function renderAnalisis() {
-  document.getElementById('stats-grid').innerHTML = '<div class="loading">Cargando...</div>';
-  try {
-    const sessions = await apiFetch('sesiones?order=fecha.desc');
-    const total = sessions.length;
-    const avgE = total ? (sessions.reduce((a,s)=>a+s.energia,0)/total).toFixed(1) : '—';
-    const avgS = total ? (sessions.reduce((a,s)=>a+s.sensacion,0)/total).toFixed(1) : '—';
-    const totalCal = sessions.reduce((a,s) => a + (s.aerobico||[]).reduce((b,ae) => b + (parseInt(ae.calorias)||0), 0), 0);
-    document.getElementById('stats-grid').innerHTML = `
-      <div class="stat-box"><div class="metric-label">Sesiones totales</div><div class="metric-val">${total}</div></div>
-      <div class="stat-box"><div class="metric-label">Energía promedio</div><div class="metric-val">${avgE}</div></div>
-      <div class="stat-box"><div class="metric-label">Sensación promedio</div><div class="metric-val">${avgS}</div></div>
-      <div class="stat-box"><div class="metric-label">Calorías aeróbico (total)</div><div class="metric-val">${totalCal > 0 ? totalCal.toLocaleString() : '—'}</div></div>
-    `;
-    const freqEj = {};
-    sessions.forEach(s => (s.ejercicios||[]).forEach(e => {
-      const k = e.nombre.toLowerCase();
-      freqEj[k] = (freqEj[k]||0) + 1;
-    }));
-    const sortedEj = Object.entries(freqEj).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const maxEj = sortedEj[0]?.[1] || 1;
-    document.getElementById('freq-list').innerHTML = sortedEj.length
-      ? sortedEj.map(([n,c]) => `
-        <div class="freq-item">
-          <span style="min-width:160px;text-transform:capitalize">${n}</span>
-          <div class="freq-bar-wrap"><div class="freq-bar" style="width:${c/maxEj*100}%"></div></div>
-          <span class="freq-count">${c}</span>
-        </div>`).join('')
-      : '<div style="color:var(--text-muted);font-size:0.82rem">Sin datos aún.</div>';
-    const freqAe = {};
-    sessions.forEach(s => (s.aerobico||[]).forEach(a => {
-      const k = a.tipo.toLowerCase();
-      freqAe[k] = (freqAe[k]||0) + 1;
-    }));
-    const sortedAe = Object.entries(freqAe).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    const maxAe = sortedAe[0]?.[1] || 1;
-    document.getElementById('freq-aerobico').innerHTML = sortedAe.length
-      ? sortedAe.map(([n,c]) => `
-        <div class="freq-item">
-          <span style="min-width:160px;text-transform:capitalize">${n}</span>
-          <div class="freq-bar-wrap"><div class="freq-bar" style="width:${c/maxAe*100}%"></div></div>
-          <span class="freq-count">${c}</span>
-        </div>`).join('')
-      : '<div style="color:var(--text-muted);font-size:0.82rem">Sin datos aún.</div>';
-  } catch(e) {
-    document.getElementById('stats-grid').innerHTML = '<div class="empty-state">Error al cargar.</div>';
-  }
-}
+const SUPABASE_URL='https://lthlauhwzusulqocvica.supabase.co';
+const SUPABASE_KEY='sb_publishable_wFGb1fWoGrvcdrQAPh34PA_rwXPRdab';
+const HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Prefer':'return=representation'};
+function toast(msg,ok=true){const el=document.getElementById('toast');el.textContent=msg;el.style.background=ok?'var(--accent)':'var(--red)';el.style.color=ok?'#000':'#fff';el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+async function apiFetch(path,options={}){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:HEADERS,...options});if(!res.ok){const err=await res.text();throw new Error(err);}const text=await res.text();return text?JSON.parse(text):[];}
+let ejCount=0,serieCount=0,aeroCount=0;
+function addEjercicio(){const id=ejCount++;const block=document.createElement('div');block.className='ejercicio-block';block.id=`ej-${id}`;block.innerHTML=`<div class="ejercicio-block-header"><input type="text" placeholder="Nombre del ejercicio" class="ej-nombre"><button class="btn-remove" onclick="document.getElementById('ej-${id}').remove()">×</button></div><div class="series-header"><span>Serie</span><span>Reps</span><span>Peso (kg)</span><span></span></div><div class="series-list" id="series-${id}"></div><button class="btn-add-serie" onclick="addSerie(${id})">+ serie</button>`;document.getElementById('ejercicios-list').appendChild(block);addSerie(id);addSerie(id);addSerie(id);}
+function addSerie(ejId){const list=document.getElementById(`series-${ejId}`);const num=list.querySelectorAll('.serie-row').length+1;const sid=serieCount++;const row=document.createElement('div');row.className='serie-row';row.id=`serie-${sid}`;row.innerHTML=`<span class="serie-num">${num}</span><input type="text" placeholder="ej: 12" class="serie-reps"><input type="number" placeholder="kg" class="serie-peso" step="0.5" min="0"><button class="btn-remove" onclick="removeSerie('serie-${sid}',${ejId})">×</button>`;list.appendChild(row);}
+function removeSerie(sid,ejId){document.getElementById(sid).remove();document.getElementById(`series-${ejId}`).querySelectorAll('.serie-row').forEach((r,i)=>{r.querySelector('.serie-num').textContent=i+1;});}
+function getEjercicios(){return[...document.querySelectorAll('.ejercicio-block')].map(block=>{const nombre=block.querySelector('.ej-nombre').value.trim();const series=[...block.querySelectorAll('.serie-row')].map((r,i)=>({serie:i+1,reps:r.querySelector('.serie-reps').value.trim(),peso:r.querySelector('.serie-peso').value})).filter(s=>s.reps||s.peso);return{nombre,series};}).filter(e=>e.nombre);}
+function addAerobico(){const id=aeroCount++;const block=document.createElement('div');block.className='aerobico-block';block.id=`aero-${id}`;block.innerHTML=`<div class="aerobico-grid"><input type="text" placeholder="Tipo (ej: Escaladora, Bicicleta...)" class="aero-tipo"><input type="text" placeholder="Tiempo (min)" class="aero-tiempo"><input type="number" placeholder="Calorías" class="aero-cal" min="0"><button class="btn-remove" onclick="document.getElementById('aero-${id}').remove()">×</button></div>`;document.getElementById('aerobico-list').appendChild(block);}
+function getAerobico(){return[...document.querySelectorAll('.aerobico-block')].map(block=>({tipo:block.querySelector('.aero-tipo').value.trim(),tiempo:block.querySelector('.aero-tiempo').value.trim(),calorias:block.querySelector('.aero-cal').value})).filter(a=>a.tipo);}
+async function guardarSesion(){const fecha=document.getElementById('fecha').value;if(!fecha){toast('Ingresá la fecha.',false);return;}const btn=document.getElementById('btn-guardar');btn.disabled=true;btn.textContent='Guardando...';try{await apiFetch('sesiones',{method:'POST',body:JSON.stringify({fecha,tipo:document.getElementById('tipo').value,calor:document.getElementById('calor').value.trim(),energia:parseInt(document.getElementById('energia').value),ejercicios:getEjercicios(),aerobico:getAerobico(),sensacion:parseInt(document.getElementById('sensacion').value),notas:document.getElementById('notas').value.trim()})});toast('Sesión guardada');document.getElementById('fecha').valueAsDate=new Date();document.getElementById('calor').value='';document.getElementById('energia').value=7;document.getElementById('energia-val').textContent='7';document.getElementById('sensacion').value=7;document.getElementById('sensacion-val').textContent='7';document.getElementById('notas').value='';document.getElementById('ejercicios-list').innerHTML='';document.getElementById('aerobico-list').innerHTML='';ejCount=0;serieCount=0;aeroCount=0;}catch(e){toast('Error al guardar',false);}btn.disabled=false;btn.textContent='Guardar sesión';}
+function showPage(name,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.getElementById(`page-${name}`).classList.add('active');btn.classList.add('active');if(name==='historial')renderHistorial();if(name==='analisis')renderAnalisis();}
+function formatFecha(str){const[y,m,d]=str.split('-');return`${d}/${m}/${y}`;}
+async function renderHistorial(){const el=document.getElementById('sessions-list');el.innerHTML='<div class="loading">Cargando...</div>';try{const sessions=await apiFetch('sesiones?order=fecha.desc');if(!sessions.length){el.innerHTML='<div class="empty-state">Sin sesiones registradas aún.</div>';return;}el.innerHTML=sessions.map(s=>`<div class="session-card"><div class="session-card-header"><span class="session-date">${formatFecha(s.fecha)}</span><div style="display:flex;gap:8px;align-items:center"><span class="session-tipo">${s.tipo}</span><button class="btn-delete" onclick="deleteSesion(${s.id})">Eliminar</button></div></div>${s.calor?`<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px">↳ Calor: ${s.calor}</div>`:''} ${(s.ejercicios||[]).length?`<div class="card-subsection"><div class="card-subsection-title">Fuerza</div>${s.ejercicios.map(e=>`<div class="ej-detail"><div class="ej-detail-nombre">${e.nombre}</div><div class="ej-series-list">${(e.series||[]).map(sr=>`<div class="ej-serie-item">S${sr.serie} — <span>${sr.reps} reps</span>${sr.peso?` · <span>${sr.peso}kg</span>`:''}</div>`).join('')}</div></div>`).join('')}</div>`:''} ${(s.aerobico||[]).length?`<div class="card-subsection"><div class="card-subsection-title">Aeróbico</div>${s.aerobico.map(a=>`<div class="aerobico-item"><span>${a.tipo}</span>${a.tiempo?` · <span>${a.tiempo} min</span>`:''}${a.calorias?` · <span>${a.calorias} kcal</span>`:''}</div>`).join('')}</div>`:''}<div class="session-metrics"><div class="metric"><span class="metric-label">Energía</span><span class="metric-val">${s.energia}/10</span></div><div class="metric"><span class="metric-label">Sensación</span><span class="metric-val">${s.sensacion}/10</span></div></div>${s.notas?`<div class="session-notes">${s.notas}</div>`:''}</div>`).join('');}catch(e){el.innerHTML='<div class="empty-state">Error al cargar sesiones.</div>';}}
+async function deleteSesion(id){if(!confirm('¿Eliminar esta sesión?'))return;try{await apiFetch(`sesiones?id=eq.${id}`,{method:'DELETE'});toast('Sesión eliminada');renderHistorial();}catch(e){toast('Error al eliminar',false);}}
+async function renderAnalisis(){document.getElementById('stats-grid').innerHTML='<div class="loading">Cargando...</div>';try{const sessions=await apiFetch('sesiones?order=fecha.desc');const total=sessions.length;const avgE=total?(sessions.reduce((a,s)=>a+s.energia,0)/total).toFixed(1):'—';const avgS=total?(sessions.reduce((a,s)=>a+s.sensacion,0)/total).toFixed(1):'—';const totalCal=sessions.reduce((a,s)=>a+(s.aerobico||[]).reduce((b,ae)=>b+(parseInt(ae.calorias)||0),0),0);document.getElementById('stats-grid').innerHTML=`<div class="stat-box"><div class="metric-label">Sesiones totales</div><div class="metric-val">${total}</div></div><div class="stat-box"><div class="metric-label">Energía promedio</div><div class="metric-val">${avgE}</div></div><div class="stat-box"><div class="metric-label">Sensación promedio</div><div class="metric-val">${avgS}</div></div><div class="stat-box"><div class="metric-label">Calorías aeróbico (total)</div><div class="metric-val">${totalCal>0?totalCal.toLocaleString():'—'}</div></div>`;const freqEj={};sessions.forEach(s=>(s.ejercicios||[]).forEach(e=>{const k=e.nombre.toLowerCase();freqEj[k]=(freqEj[k]||0)+1;}));const sortedEj=Object.entries(freqEj).sort((a,b)=>b[1]-a[1]).slice(0,8);const maxEj=sortedEj[0]?.[1]||1;document.getElementById('freq-list').innerHTML=sortedEj.length?sortedEj.map(([n,c])=>`<div class="freq-item"><span style="min-width:160px;text-transform:capitalize">${n}</span><div class="freq-bar-wrap"><div class="freq-bar" style="width:${c/maxEj*100}%"></div></div><span class="freq-count">${c}</span></div>`).join(''):'<div style="color:var(--text-muted);font-size:0.82rem">Sin datos aún.</div>';const freqAe={};sessions.forEach(s=>(s.aerobico||[]).forEach(a=>{const k=a.tipo.toLowerCase();freqAe[k]=(freqAe[k]||0)+1;}));const sortedAe=Object.entries(freqAe).sort((a,b)=>b[1]-a[1]).slice(0,6);const maxAe=sortedAe[0]?.[1]||1;document.getElementById('freq-aerobico').innerHTML=sortedAe.length?sortedAe.map(([n,c])=>`<div class="freq-item"><span style="min-width:160px;text-transform:capitalize">${n}</span><div class="freq-bar-wrap"><div class="freq-bar" style="width:${c/maxAe*100}%"></div></div><span class="freq-count">${c}</span></div>`).join(''):'<div style="color:var(--text-muted);font-size:0.82rem">Sin datos aún.</div>';}catch(e){document.getElementById('stats-grid').innerHTML='<div class="empty-state">Error al cargar.</div>';}}
 </script>
 </body>
 </html>
